@@ -428,13 +428,13 @@ def main(model_path, audio_tokenizer, max_new_tokens, transcript, texts_file, ba
             with open(texts_file, "r", encoding="utf-8") as f:
                 lines = [ln.strip() for ln in f.readlines() if ln.strip()]
             # Each line in TXT file is converted to a dictionary with default values
-            texts = [{"prompt": ln, "out_filename": f"{out_name}_{i+1:03d}", "voice": ref_audio} for i, ln in enumerate(lines)]
+            texts = [{"prompt": ln, "out_filename": f"{out_name}_{i+1:03d}.wav", "voice": ref_audio} for i, ln in enumerate(lines)]
 
     elif transcript: # For a single transcript file
         assert os.path.exists(transcript), f"{transcript} not found"
         with open(transcript, "r", encoding="utf-8") as f:
             # Single transcript is also wrapped in a dictionary for consistent processing
-            texts = [{"prompt": f.read().strip(), "out_filename": out_name, "voice": ref_audio}]
+            texts = [{"prompt": f.read().strip(), "out_filename": f"{out_name}.wav", "voice": ref_audio}]
     else:
         raise ValueError("Provide --texts_file (TXT/JSON) or --transcript (single file).")
 
@@ -500,10 +500,11 @@ def main(model_path, audio_tokenizer, max_new_tokens, transcript, texts_file, ba
             raw_prompt = item["prompt"]
             out_filename_with_path = item["out_filename"]
             
-            # Split the filename to get the folder and file name
-            folder_name, file_name = os.path.split(out_filename_with_path)
+            # Split the filename to get the folder and file name, handling both / and \
+            # Also ensures the folder path is correctly joined with the base output directory
+            folder_name, file_name = os.path.split(out_filename_with_path.replace("\\", os.sep))
             
-            # Create the full path for the new folder
+            # Construct the full path for the new folder
             full_output_folder_path = os.path.join(out_dir, folder_name)
             
             # Create the directory if it doesn't exist
