@@ -496,10 +496,31 @@ def main(model_path, audio_tokenizer, max_new_tokens, transcript, texts_file, ba
         
         # Save each generated audio file from the batch
         for j, (concat_wv, sr, _) in enumerate(output_data):
-            out_file_name = batch_items[j]["out_filename"]
-            out_path = os.path.join(out_dir, f"{out_file_name}.wav")
-            sf.write(out_path, concat_wv, sr)
-            logger.info(f"Saved: {out_path} (sr={sr})")
+            item = batch_items[j]
+            raw_prompt = item["prompt"]
+            out_filename_with_path = item["out_filename"]
+            
+            # Split the filename to get the folder and file name
+            folder_name, file_name = os.path.split(out_filename_with_path)
+            
+            # Create the full path for the new folder
+            full_output_folder_path = os.path.join(out_dir, folder_name)
+            
+            # Create the directory if it doesn't exist
+            os.makedirs(full_output_folder_path, exist_ok=True)
+            
+            # Define file paths for both the WAV and the TXT files
+            audio_out_path = os.path.join(full_output_folder_path, file_name)
+            text_out_path = os.path.join(full_output_folder_path, "script.txt")
+            
+            # Save the generated audio
+            sf.write(audio_out_path, concat_wv, sr)
+            logger.info(f"Saved audio to: {audio_out_path} (sr={sr})")
+            
+            # Save the original prompt to a new script.txt file
+            with open(text_out_path, "w", encoding="utf-8") as f:
+                f.write(raw_prompt)
+            logger.info(f"Saved text to: {text_out_path}")
 
     logger.info("All items processed successfully.")
     # =========================================================================
